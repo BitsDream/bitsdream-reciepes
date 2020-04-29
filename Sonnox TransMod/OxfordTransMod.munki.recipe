@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Description</key>
+	<string>Recipe description</string>
+	<key>Identifier</key>
+	<string>com.bitsdream.recipes.munki.OxfordTransMod</string>
+	<key>Input</key>
+	<dict>
+		<key>NAME</key>
+		<string>OxfordTransMod</string>
+		<key>MUNKI_REPO_SUBDIR</key>
+		<string>Sonnox/%NAME%</string>
+		<key>pkginfo</key>
+		<dict>
+			<key>catalogs</key>
+			<array>
+				<string>testing</string>
+			</array>
+			<key>category</key>
+			<string>Creative Audio</string>
+			<key>description</key>
+			<string>The Transient Modulator allows dramatic manipulation of signal transients. It can completely exaggerate or dampen the attacks, with continuous variation between all settings. A 'soggy' drum kit can be brought to life, or a bass made to sound more punchy. Conversely, it can bring up the ambience surrounding a specific sound by softening the attack. The TransMod can give life to dull sounding recordings, without the unwanted changes in overall timbre associated with compression.</string>
+			<key>developer</key>
+			<string>Sonnox</string>
+			<key>display_name</key>
+			<string>Pro Tools - Oxford TransMod</string>
+			<key>minimum_os_version</key>
+			<string>10.10</string>
+			<key>name</key>
+			<string>%NAME%</string>
+			<key>unattended_install</key>
+			<true/>
+			<key>uninstall_method</key>
+			<string>uninstall_script</string>
+			<key>uninstall_script</key>
+				<string>#!/bin/zsh
+
+SAVEIFS=$IFS
+IFS=$'\n';
+
+PLUGINS="/Library/Application Support/Avid/Audio/Plug-Ins/Oxford TransMod.aaxplugin
+/Library/Audio/Plug-Ins/Components/Oxford TransMod.component
+/Library/Audio/Plug-Ins/VST/Sonnox/Oxford TransMod Native.vst
+/Library/Audio/Plug-Ins/VST3/Sonnox/Oxford TransMod Native.vst3"
+
+for PLUGIN in $PLUGINS; do
+    if [[ -d "$PLUGIN" ]]; then
+        rm -Rf "$PLUGIN"
+    fi
+done
+
+BOMS=$(pkgutil --pkgs | grep com.sonnox.pkg.oxford-transmod.)
+for BOM in $BOMS; do
+	pkgutil --forget "$BOM"
+done
+
+IFS=$SAVEIFS</string>
+		</dict>
+	</dict>
+	<key>MiniumumVersion</key>
+	<string>1.0</string>
+	<key>ParentRecipe</key>
+	<string>ch.srgssr.recipes.download.OxfordTransMod</string>
+	<key>Process</key>
+	<array>
+		<dict>
+            <key>Processor</key>
+            <string>PkgCopier</string>
+            <key>Arguments</key>
+            <dict>
+                <key>source_pkg</key>
+                <string>%RECIPE_CACHE_DIR%/unzip/*.pkg</string>
+                <key>pkg_path</key>
+                <string>%RECIPE_CACHE_DIR%/unzip/%NAME%.pkg</string>
+            </dict>
+        </dict>
+		<dict>        
+			<key>Processor</key>
+			<string>FlatPkgUnpacker</string>
+			<key>Arguments</key>
+			<dict>
+				<key>flat_pkg_path</key>
+				<string>%RECIPE_CACHE_DIR%/unzip/%NAME%.pkg</string>
+				<key>destination_path</key>
+				<string>%RECIPE_CACHE_DIR%/unpack</string>
+			</dict>
+		</dict>
+  		<dict>
+            <key>Processor</key>
+            <string>PkgPayloadUnpacker</string>
+            <key>Arguments</key>
+            <dict>
+                <key>pkg_payload_path</key>
+                <string>%RECIPE_CACHE_DIR%/unpack/Oxford_TransMod_AAX_DSP_Plugin.pkg/Payload</string>
+                <key>destination_path</key>
+                <string>%RECIPE_CACHE_DIR%/payload/Library/Application Support/Avid/Audio/Plug-Ins</string>
+            </dict>
+        </dict>
+		<dict>
+			<key>Processor</key>
+			<string>Versioner</string>		
+			<key>Arguments</key>
+			<dict>
+				<key>input_plist_path</key>
+				<string>%RECIPE_CACHE_DIR%/payload/Library/Application Support/Avid/Audio/Plug-Ins/Oxford TransMod.aaxplugin/Contents/Info.plist</string>
+			</dict>
+		</dict>             
+		<dict>
+			<key>Processor</key>
+			<string>MunkiPkginfoMerger</string>
+			<key>Arguments</key>
+			<dict>
+				<key>additional_pkginfo</key>
+				<dict>
+					<key>version</key>
+					<string>%version%</string>	
+				</dict>
+			</dict>
+		</dict>			
+		<dict>
+			<key>Processor</key>
+			<string>MunkiInstallsItemsCreator</string>
+			<key>Arguments</key>
+			<dict>
+				<key>faux_root</key>
+				<string>%RECIPE_CACHE_DIR%/payload</string>
+				<key>installs_item_paths</key>
+				<array>
+					<string>/Library/Application Support/Avid/Audio/Plug-Ins/Oxford TransMod.aaxplugin</string>
+				</array>		
+			</dict>
+		</dict>		
+		<dict>
+            <key>Processor</key>
+            <string>MunkiPkginfoMerger</string>
+        </dict>
+		<dict>
+			<key>Processor</key>
+			<string>MunkiImporter</string>
+			<key>Arguments</key>
+			<dict>
+				<key>pkg_path</key>
+				<string>%RECIPE_CACHE_DIR%/unzip/%NAME%.pkg</string>			
+				<key>repo_subdirectory</key>
+				<string>%MUNKI_REPO_SUBDIR%</string>				
+			</dict>
+		</dict>
+		<dict>
+			<key>Processor</key>
+			<string>PathDeleter</string>		
+			<key>Arguments</key>
+			<dict>
+				<key>path_list</key>
+				<array>
+				    <string>%RECIPE_CACHE_DIR%/unzip</string>
+					<string>%RECIPE_CACHE_DIR%/unpack</string>
+					<string>%RECIPE_CACHE_DIR%/payload</string>
+				</array>
+			</dict>		
+		</dict>					
+	</array>
+</dict>
+</plist>
